@@ -13,7 +13,7 @@
 				<div class="mdl-cell mdl-cell--4-col">
 					<h3>Phishing Demo</h3>
 					
-					<button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" ng-click="sendEmail()">
+					<button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" ng-click="sendEmail({})">
 						Send email
 					</button>
 					
@@ -38,7 +38,7 @@
 							
 							<span class="mdl-list__item-primary-content">
 								<span>{{contact.names[0].displayName}}</span>
-								<span class="mdl-list__item-sub-title">{{contact.phoneNumbers[0].value}} <a ng-click="sendEmail(user, contact)">{{contact.emailAddresses[0].value}}</a></span>
+								<span class="mdl-list__item-sub-title">{{contact.phoneNumbers[0].value}} <a ng-click="sendEmail({recipient: contact})">{{contact.emailAddresses[0].value}}</a></span>
 							</span>
 						</li>
 					</ul>
@@ -59,6 +59,11 @@
 						</li>
 					</ul>
 				</div>
+			</div>
+			
+			<div id="snackbar" class="mdl-js-snackbar mdl-snackbar">
+				<div class="mdl-snackbar__text"></div>
+				<button class="mdl-snackbar__action" type="button"></button>
 			</div>
 		</main>
 		
@@ -94,8 +99,20 @@
 					}
 				});
 
-				$scope.sendEmail = recipient => {
-					socket.emit('sendEmail', {recipient});
+				$scope.sendEmail = ({recipient}) => {
+					const email = recipient ? recipient.emailAddresses[0].value : null;
+					
+					socket.emit('sendEmail', {
+						recipient: email ? {
+							email
+						} : undefined
+					});
+					const data = {
+						message: email ? `Sent email to ${email}` : 'Sent email',
+						timeout: 2000
+					};
+					const snackbarContainer = document.querySelector('#snackbar');
+					snackbarContainer.MaterialSnackbar.showSnackbar(data);
 				};
 				
 				$scope.openAuth = () => {
